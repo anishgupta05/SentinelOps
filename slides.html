@@ -1,0 +1,467 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>SentinelOps — Pitch Deck</title>
+<style>
+  :root {
+    --bg: #fcfcfb;
+    --page: #f9f9f7;
+    --card: #f0efec;
+    --border: rgba(11,11,11,0.10);
+    --text: #0b0b0b;
+    --muted: #52514e;
+    --accent: #2a78d6;
+    --good: #0ca30c;
+    --warning: #fab219;
+    --serious: #ec835a;
+    --critical: #d03b3b;
+    --track: #e1e0d9;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0;
+    height: 100%;
+    background: var(--page);
+    font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+    color: var(--text);
+    overflow: hidden;
+  }
+  .deck {
+    position: relative;
+    width: 100vw;
+    height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .slide {
+    position: absolute;
+    inset: 0;
+    display: none;
+    flex-direction: column;
+    justify-content: center;
+    padding: 6vh 9vw;
+    background: var(--bg);
+  }
+  .slide.active { display: flex; }
+  .slide .kicker {
+    font-size: 0.85rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 14px;
+  }
+  .slide h1 {
+    font-size: 4.4rem;
+    font-weight: 700;
+    line-height: 1.05;
+    margin: 0 0 18px 0;
+    letter-spacing: -0.02em;
+  }
+  .slide h2 {
+    font-size: 3rem;
+    font-weight: 700;
+    line-height: 1.1;
+    margin: 0 0 28px 0;
+    letter-spacing: -0.01em;
+  }
+  .slide p.lede {
+    font-size: 1.5rem;
+    color: var(--muted);
+    max-width: 46ch;
+    line-height: 1.5;
+    margin: 0;
+  }
+  .slide ul.points {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 22px;
+    max-width: 60ch;
+  }
+  .slide ul.points li {
+    font-size: 1.5rem;
+    line-height: 1.4;
+    padding-left: 46px;
+    position: relative;
+  }
+  .slide ul.points li .num {
+    position: absolute;
+    left: 0;
+    top: -2px;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: var(--accent);
+    color: #fff;
+    font-size: 0.95rem;
+    font-weight: 700;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .quote {
+    margin-top: 40px;
+    font-size: 1.7rem;
+    font-weight: 600;
+    color: var(--text);
+    border-left: 4px solid var(--accent);
+    padding-left: 22px;
+    max-width: 52ch;
+  }
+  .hero {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-items: center;
+    margin: 8px 0 40px 0;
+  }
+  .hero-step {
+    font-size: 0.95rem;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    color: var(--muted);
+    padding: 8px 16px;
+    border: 1.5px solid var(--border);
+    border-radius: 999px;
+    background: var(--card);
+  }
+  .hero-arrow { color: var(--muted); font-size: 1.2rem; }
+  table.stack {
+    border-collapse: collapse;
+    width: 100%;
+    max-width: 880px;
+    font-size: 1.15rem;
+  }
+  table.stack th, table.stack td {
+    text-align: left;
+    padding: 14px 18px;
+    border-bottom: 1px solid var(--border);
+  }
+  table.stack th {
+    color: var(--muted);
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    font-weight: 700;
+  }
+  table.stack td.role { color: var(--muted); }
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+    padding: 3px 10px;
+    border-radius: 999px;
+    text-transform: uppercase;
+    color: #fff;
+  }
+  .badge.good { background: var(--good); }
+  .badge.mock { background: var(--muted); }
+  .compare-row {
+    display: flex;
+    gap: 40px;
+    margin-top: 20px;
+  }
+  .compare-card {
+    flex: 1;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 28px 30px;
+  }
+  .compare-card .label {
+    font-size: 0.85rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--muted);
+    margin-bottom: 10px;
+  }
+  .compare-card .value {
+    font-size: 3.4rem;
+    font-weight: 700;
+    line-height: 1;
+    margin-bottom: 16px;
+  }
+  .meter-track {
+    height: 14px;
+    border-radius: 7px;
+    background: var(--track);
+    overflow: hidden;
+    margin-bottom: 14px;
+  }
+  .meter-fill { height: 100%; border-radius: 7px; }
+  .compare-card .sources {
+    font-size: 1.05rem;
+    color: var(--muted);
+  }
+  .caption {
+    margin-top: 26px;
+    font-size: 1.25rem;
+    color: var(--muted);
+    max-width: 70ch;
+  }
+  .query-box {
+    margin-top: 30px;
+    font-size: 1.6rem;
+    font-weight: 600;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 24px 30px;
+    max-width: 70ch;
+  }
+  .grid2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    max-width: 980px;
+  }
+  .tile {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 22px 24px;
+  }
+  .tile .title {
+    font-weight: 700;
+    font-size: 1.2rem;
+    margin-bottom: 6px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .tile .desc { color: var(--muted); font-size: 1.02rem; line-height: 1.5; }
+  .center { align-items: center; text-align: center; }
+  .center ul.points, .center .lede, .center .query-box { margin-left: auto; margin-right: auto; }
+  .brand {
+    position: fixed;
+    bottom: 54px;
+    left: 9vw;
+    font-size: 0.85rem;
+    color: var(--muted);
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    z-index: 50;
+  }
+
+  /* Chrome */
+  .progress {
+    position: fixed;
+    top: 0; left: 0;
+    height: 4px;
+    background: var(--accent);
+    z-index: 50;
+    transition: width 0.25s ease;
+  }
+  .nav {
+    position: fixed;
+    bottom: 24px;
+    right: 9vw;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    z-index: 50;
+    font-size: 0.95rem;
+    color: var(--muted);
+  }
+  .nav button {
+    width: 40px; height: 40px;
+    border-radius: 50%;
+    border: 1px solid var(--border);
+    background: var(--bg);
+    color: var(--text);
+    font-size: 1.1rem;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .nav button:hover { background: var(--card); }
+  .nav button:disabled { opacity: 0.3; cursor: default; }
+  .hint {
+    position: fixed;
+    bottom: 24px;
+    left: 9vw;
+    font-size: 0.85rem;
+    color: var(--muted);
+    z-index: 50;
+  }
+</style>
+</head>
+<body>
+
+<div class="progress" id="progress"></div>
+<div class="deck" id="deck">
+
+  <section class="slide active center">
+    <div class="kicker">Agents You Love Hackathon · Frontier Tower</div>
+    <h1>SentinelOps</h1>
+    <p class="lede">An autonomous incident commander for the gaps between engineering tools.</p>
+  </section>
+
+  <section class="slide">
+    <div class="kicker">The Problem</div>
+    <h2>Bugs die in Slack threads</h2>
+    <ul class="points">
+      <li><span class="num">1</span>Someone reports a bug in Slack. A few reactions. Then silence.</li>
+      <li><span class="num">2</span>Filing a ticket is friction — so no one does it.</li>
+      <li><span class="num">3</span>Weeks later: a customer escalation. The internal warning is gone.</li>
+    </ul>
+    <div class="quote">"Which bugs did we complain about in Slack that never became tickets?"</div>
+  </section>
+
+  <section class="slide">
+    <div class="kicker">What SentinelOps Does</div>
+    <h2>A pipeline, not a dashboard</h2>
+    <ul class="points">
+      <li><span class="num">1</span>Detects unresolved complaints in Slack</li>
+      <li><span class="num">2</span>Resolves context across Slack, GitHub, Linear, and Gmail</li>
+      <li><span class="num">3</span>Reasons about severity and likely root cause</li>
+      <li><span class="num">4</span>Drafts or files a ticket — and closes the loop in Slack</li>
+    </ul>
+  </section>
+
+  <section class="slide">
+    <div class="kicker">Architecture</div>
+    <h2>Four nodes, one context graph</h2>
+    <div class="hero">
+      <span class="hero-step">1 Triage</span><span class="hero-arrow">&rarr;</span>
+      <span class="hero-step">2 Root cause</span><span class="hero-arrow">&rarr;</span>
+      <span class="hero-step">3 Fix proposal</span><span class="hero-arrow">&rarr;</span>
+      <span class="hero-step">4 Notify</span>
+    </div>
+    <table class="stack">
+      <tr><th>Component</th><th>Role</th></tr>
+      <tr><td>HydraDB</td><td class="role">Entity-resolved context graph across all four sources</td></tr>
+      <tr><td>Pipeshift</td><td class="role">Dev-ops triage model for root-cause reasoning</td></tr>
+      <tr><td>RocketRide</td><td class="role">Multi-node orchestration, hosting, and observability</td></tr>
+      <tr><td>InsForge</td><td class="role">Intent and permission boundary for agent actions</td></tr>
+    </table>
+  </section>
+
+  <section class="slide center">
+    <div class="kicker">Live Demo</div>
+    <h2>Let's watch it work</h2>
+    <div class="query-box">"Which bugs did we complain about in Slack that never became tickets?"</div>
+  </section>
+
+  <section class="slide">
+    <div class="kicker">The Core Visual</div>
+    <h2>Missing context, not just worse text</h2>
+    <div class="caption" style="margin-top:0;margin-bottom:8px;">Incident: checkout returns a 500 on payment submission</div>
+    <div class="compare-row">
+      <div class="compare-card">
+        <div class="label">Full context</div>
+        <div class="value">0.95</div>
+        <div class="meter-track"><div class="meter-fill" style="width:95%;background:var(--good);"></div></div>
+        <div class="sources">Grounded in 4/4 sources · severity: high</div>
+      </div>
+      <div class="compare-card">
+        <div class="label">Degraded (Slack-only)</div>
+        <div class="value">0.35</div>
+        <div class="meter-track"><div class="meter-fill" style="width:35%;background:var(--critical);"></div></div>
+        <div class="sources">Grounded in 1/4 sources · severity: high</div>
+      </div>
+    </div>
+    <div class="caption">On a different incident (a billing overcharge), the same missing context doesn't just lower confidence — it flips the severity call itself from <b>high</b> to <b>low</b>.</div>
+  </section>
+
+  <section class="slide">
+    <div class="kicker">Safety By Design</div>
+    <h2>No unrestricted bot with API keys</h2>
+    <ul class="points">
+      <li><span class="num">1</span>Draft-only by default — auto-filing requires an explicit policy</li>
+      <li><span class="num">2</span>Every action gated by confidence, severity, and evidence thresholds</li>
+      <li><span class="num">3</span>Every decision persisted to a real, inspectable audit log</li>
+    </ul>
+  </section>
+
+  <section class="slide">
+    <div class="kicker">Not Just A Mock</div>
+    <h2>Verified against live infrastructure</h2>
+    <div class="grid2">
+      <div class="tile">
+        <div class="title">HydraDB <span class="badge good">live</span></div>
+        <div class="desc">Real graph ingestion with cross-source relations, verified end to end.</div>
+      </div>
+      <div class="tile">
+        <div class="title">RocketRide <span class="badge good">live</span></div>
+        <div class="desc">Real hosted execution and observability for the published result.</div>
+      </div>
+      <div class="tile">
+        <div class="title">InsForge <span class="badge good">live</span></div>
+        <div class="desc">Every policy decision persisted to a real Postgres audit table.</div>
+      </div>
+      <div class="tile">
+        <div class="title">Pipeshift <span class="badge mock">mocked</span></div>
+        <div class="desc">Deterministic local reasoning, swappable behind the same interface.</div>
+      </div>
+    </div>
+  </section>
+
+  <section class="slide center">
+    <div class="kicker">Thank You</div>
+    <h2>Questions?</h2>
+    <p class="lede">SentinelOps — the pipeline that closes the loop before it reaches customers.</p>
+  </section>
+
+</div>
+
+<div class="brand">SentinelOps</div>
+<div class="hint">&larr; &rarr; to navigate · F for fullscreen</div>
+<div class="nav">
+  <button id="prev" aria-label="Previous slide">&larr;</button>
+  <span id="counter">1 / 9</span>
+  <button id="next" aria-label="Next slide">&rarr;</button>
+</div>
+
+<script>
+  const slides = Array.from(document.querySelectorAll(".slide"));
+  const total = slides.length;
+  let i = 0;
+
+  const params = new URLSearchParams(window.location.search);
+  const requested = parseInt(params.get("slide"), 10);
+  if (!Number.isNaN(requested)) i = Math.min(total - 1, Math.max(0, requested - 1));
+
+  function render() {
+    slides.forEach((s, idx) => s.classList.toggle("active", idx === i));
+    document.getElementById("counter").textContent = `${i + 1} / ${total}`;
+    document.getElementById("progress").style.width = `${((i + 1) / total) * 100}%`;
+    document.getElementById("prev").disabled = i === 0;
+    document.getElementById("next").disabled = i === total - 1;
+  }
+
+  function go(delta) {
+    i = Math.min(total - 1, Math.max(0, i + delta));
+    render();
+  }
+
+  document.getElementById("prev").addEventListener("click", () => go(-1));
+  document.getElementById("next").addEventListener("click", () => go(1));
+
+  window.addEventListener("keydown", (e) => {
+    if (["ArrowRight", "ArrowDown", "PageDown", " "].includes(e.key)) { go(1); e.preventDefault(); }
+    else if (["ArrowLeft", "ArrowUp", "PageUp"].includes(e.key)) { go(-1); e.preventDefault(); }
+    else if (e.key === "Home") { i = 0; render(); }
+    else if (e.key === "End") { i = total - 1; render(); }
+    else if (e.key.toLowerCase() === "f") {
+      if (!document.fullscreenElement) document.documentElement.requestFullscreen();
+      else document.exitFullscreen();
+    }
+  });
+
+  render();
+</script>
+</body>
+</html>
