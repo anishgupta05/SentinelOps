@@ -1,44 +1,10 @@
-from sentinelops.connectors import GitHubConnector, GmailConnector, LinearConnector, SlackConnector
-from sentinelops.demo_data import load_context, load_events
-from sentinelops.graph.hydra import InMemoryHydraGraph
-from sentinelops.orchestrator.pipeline import run
-from sentinelops.orchestrator.rocketride import InMemoryTraceRecorder
-from sentinelops.policy.config import load_default_policy
-from sentinelops.policy.insforge import ConfigDrivenIntentPolicy
-from sentinelops.reasoning.pipeshift import RuleBasedTriageModel
+from sentinelops.demo_runner import run_demo_pipeline
 
-
-def run_demo(context_name: str):
-    context = load_context(context_name)
-    all_events = load_events()
-    enabled = set(context.enabled_sources)
-
-    graph = InMemoryHydraGraph()
-    graph.ingest([e for e in all_events if e.source in enabled])
-
-    def events_for(source: str):
-        return [e for e in all_events if e.source == source]
-
-    connectors = [
-        SlackConnector(events=events_for("slack"), enabled="slack" in enabled),
-        GitHubConnector(events=events_for("github"), enabled="github" in enabled),
-        LinearConnector(events=events_for("linear"), enabled="linear" in enabled),
-        GmailConnector(events=events_for("gmail"), enabled="gmail" in enabled),
-    ]
-
-    return run(
-        query="Which bugs did we complain about in Slack that never became tickets?",
-        context_label=context.label,
-        graph=graph,
-        connectors=connectors,
-        model=RuleBasedTriageModel(),
-        policy=ConfigDrivenIntentPolicy(load_default_policy()),
-        recorder=InMemoryTraceRecorder(),
-    )
+QUERY = "Which bugs did we complain about in Slack that never became tickets?"
 
 
 def test_full_context_finds_and_grounds_the_complaint() -> None:
-    result = run_demo("full")
+    result = run_demo_pipeline("full", QUERY)
     assert result.candidate is not None
     assert result.analysis is not None
     assert result.analysis.missing_evidence_sources == []
@@ -48,8 +14,8 @@ def test_full_context_finds_and_grounds_the_complaint() -> None:
 
 
 def test_degraded_context_has_lower_confidence_and_missing_evidence() -> None:
-    full = run_demo("full")
-    degraded = run_demo("degraded")
+    full = run_demo_pipeline("full", QUERY)
+    degraded = run_demo_pipeline("degraded", QUERY)
 
     assert degraded.analysis is not None and full.analysis is not None
     assert degraded.analysis.confidence < full.analysis.confidence
@@ -62,7 +28,7 @@ def test_degraded_context_has_lower_confidence_and_missing_evidence() -> None:
 
 def test_trace_records_all_four_nodes_for_both_contexts() -> None:
     for context_name in ("full", "degraded"):
-        result = run_demo(context_name)
+        result = run_demo_pipeline(context_name, QUERY)
         assert [r.node for r in result.trace.records] == [
             "triage",
             "root_cause",

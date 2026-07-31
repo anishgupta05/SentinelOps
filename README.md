@@ -142,6 +142,12 @@ uv run sentinelops demo --context degraded --query "Which bugs did we complain a
 
 The full-context run grounds its root-cause analysis in all four sources; the degraded (Slack-only) run visibly drops confidence and lists the missing sources directly in the printed trace, matching the Demo Flow above.
 
+For presenting the demo, there's also a Streamlit frontend (`app.py`) with a "Run" tab (the operator workflow: pick a context, run the pipeline, see the trace and resulting ticket/notification) and a "Full vs Degraded" tab that runs both contexts side by side with a confidence comparison, for the moment in the Demo Flow above:
+
+```
+uv run streamlit run app.py
+```
+
 Remaining stretch work: exposing the pipeline as an MCP tool (see Stretch Goal), and wiring real sponsor clients in behind the existing adapter interfaces.
 
 Run tests with `uv run pytest -q`; lint with `uv run ruff check .`.
