@@ -1,0 +1,13 @@
+# Default InsForge-style intent policy for the demo. Draft-only until confidence
+# and evidence requirements are met; auto-filing stays off unless explicitly enabled.
+allowed_channels:
+  - "*"
+allowed_repos:
+  - "*"
+auto_file: false
+min_confidence_to_file: 0.8
+min_confidence_to_escalate: 0.7
+severity_escalation_threshold: high
+allowed_assignees: []
+required_evidence_sources:
+  - slack
