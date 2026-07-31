@@ -15,7 +15,7 @@ def gather_evidence(
         SourceEvidence(
             source=connector.source,
             available=connector.enabled,
-            events=connector.fetch_events(thread_id=candidate.thread_id),
+            events=connector.fetch_events(event_ids=candidate.source_event_ids),
         )
         for connector in connectors
     ]
