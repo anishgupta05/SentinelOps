@@ -45,17 +45,30 @@ def build_pipeline_inputs(
     return graph, connectors, context
 
 
+def _rocketride_payload(result: PipelineResult, query: str, context_label: str) -> dict:
+    return {
+        "query": query,
+        "context": context_label,
+        "candidate_summary": result.candidate.summary if result.candidate else None,
+        "severity": result.analysis.severity if result.analysis else None,
+        "confidence": result.analysis.confidence if result.analysis else None,
+        "ticket_mode": result.proposal.mode if result.proposal else None,
+        "notification_message": result.notification.message if result.notification else None,
+    }
+
+
 def run_demo_pipeline(
     context_name: str,
     query: str,
     incident: str = "checkout_500",
     *,
     use_real_hydra: bool = False,
+    use_real_rocketride: bool = False,
 ) -> PipelineResult:
     graph, connectors, context = build_pipeline_inputs(
         context_name, incident, use_real_hydra=use_real_hydra
     )
-    return run(
+    result = run(
         query=query,
         context_label=context.label,
         graph=graph,
@@ -64,3 +77,12 @@ def run_demo_pipeline(
         policy=ConfigDrivenIntentPolicy(load_default_policy()),
         recorder=InMemoryTraceRecorder(),
     )
+
+    if use_real_rocketride:
+        from sentinelops.orchestrator.rocketride_live import publish_result
+
+        result.rocketride_status = publish_result(
+            _rocketride_payload(result, query, context.label)
+        )
+
+    return result

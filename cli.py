@@ -6,8 +6,21 @@ from sentinelops.demo_data import INCIDENTS
 from sentinelops.demo_runner import run_demo_pipeline
 
 
-def print_demo(context_name: str, query: str, incident: str, *, use_real_hydra: bool) -> None:
-    result = run_demo_pipeline(context_name, query, incident, use_real_hydra=use_real_hydra)
+def print_demo(
+    context_name: str,
+    query: str,
+    incident: str,
+    *,
+    use_real_hydra: bool,
+    use_real_rocketride: bool,
+) -> None:
+    result = run_demo_pipeline(
+        context_name,
+        query,
+        incident,
+        use_real_hydra=use_real_hydra,
+        use_real_rocketride=use_real_rocketride,
+    )
 
     print(f"=== SentinelOps demo ({result.trace.context_label} context) ===")
     print(f"Incident: {INCIDENTS[incident]}")
@@ -41,6 +54,15 @@ def print_demo(context_name: str, query: str, incident: str, *, use_real_hydra: 
     print(f"Rationale: {result.notification.rationale}")
     print(f"Sent: {result.notification.sent}")
 
+    if result.rocketride_status is not None:
+        print()
+        print("--- RocketRide (live) ---")
+        print(f"Status: {result.rocketride_status.get('status')}")
+        metrics = result.rocketride_status.get("metrics", {})
+        print(f"CPU: {metrics.get('cpu_percent')}% | Memory: {metrics.get('cpu_memory_mb'):.1f}MB")
+        tokens = result.rocketride_status.get("tokens", {})
+        print(f"Billing tokens: {tokens.get('total')}")
+
 
 def main() -> None:
     parser = argparse.ArgumentParser(prog="sentinelops")
@@ -56,12 +78,22 @@ def main() -> None:
         default="mock",
         help="'hydradb' uses the real API (needs HYDRA_DB_API_KEY set)",
     )
+    demo.add_argument(
+        "--publish-rocketride",
+        action="store_true",
+        help="Also publish the result through a real RocketRide-hosted pipeline "
+        "(needs ROCKETRIDE_APIKEY set)",
+    )
 
     args = parser.parse_args()
 
     if args.command == "demo":
         print_demo(
-            args.context, args.query, args.incident, use_real_hydra=args.graph_backend == "hydradb"
+            args.context,
+            args.query,
+            args.incident,
+            use_real_hydra=args.graph_backend == "hydradb",
+            use_real_rocketride=args.publish_rocketride,
         )
 
 

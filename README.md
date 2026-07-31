@@ -157,8 +157,21 @@ uv sync --extra hydra
 HYDRA_DB_API_KEY=... uv run --extra hydra python cli.py demo --context full --graph-backend hydradb --query "..."
 ```
 
-The Streamlit app has a matching "Use real HydraDB" toggle in the sidebar (enabled once `HYDRA_DB_API_KEY` is set in the environment). Pipeshift, RocketRide, and InsForge remain mock-only until their credentials/docs are available.
+The Streamlit app has a matching "Use real HydraDB" toggle in the sidebar (enabled once `HYDRA_DB_API_KEY` is set in the environment).
 
-Remaining stretch work: exposing the pipeline as an MCP tool (see Stretch Goal), and wiring the other three sponsor clients in behind their existing adapter interfaces.
+### Real RocketRide integration
+
+RocketRide turned out to be architecturally different from the other three: it's a hosted pipeline *engine* (you author a `.pipe` node graph and it runs on RocketRide's own server), not a service our code calls for a side effect. Its `tool_python` node runs in a RestrictedPython sandbox with no filesystem or local-package access, so SentinelOps' own node code can't execute there - a full "port the four nodes into RocketRide" integration would mean rewriting them as native RocketRide components, not swapping a client.
+
+What's implemented instead (`sentinelops/orchestrator/rocketride_live.py`) is honest about that boundary: after the pipeline finishes running locally, the result is genuinely published through a minimal real `.pipe` pipeline hosted on RocketRide's live engine, and the engine's own task status - real CPU/memory metrics and billing tokens, not simulated - is read back and shown in the trace. This covers RocketRide's "production hosting and observability" role without claiming it ran the reasoning.
+
+```
+uv sync --extra rocketride
+ROCKETRIDE_APIKEY=... uv run --extra rocketride python cli.py demo --context full --publish-rocketride --query "..."
+```
+
+The Streamlit app has a matching "Publish to RocketRide" toggle in the sidebar. Pipeshift and InsForge remain mock-only until their credentials/docs are available.
+
+Remaining stretch work: exposing the pipeline as an MCP tool (see Stretch Goal), and wiring Pipeshift/InsForge in behind their existing adapter interfaces.
 
 Run tests with `uv run pytest -q`; lint with `uv run ruff check .`.

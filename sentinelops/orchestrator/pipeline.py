@@ -25,6 +25,7 @@ class PipelineResult:
     proposal: TicketProposal | None
     notification: NotificationPayload | None
     trace: PipelineTrace
+    rocketride_status: dict | None = None
 
 
 def run(
