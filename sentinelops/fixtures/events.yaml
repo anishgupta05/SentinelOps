@@ -1,0 +1,42 @@
+# One incident's worth of cross-tool events. The full-context demo run ingests
+# all of these; the degraded run keeps only the slack ones (see context_*.yaml).
+- id: slack-1
+  source: slack
+  event_type: message
+  thread_id: checkout-500
+  author: alice
+  text: "Checkout is throwing a 500 when you submit payment, anyone else seeing this?"
+  occurred_at: "2026-07-28T14:02:00Z"
+  metadata:
+    link_key: checkout-500
+
+- id: slack-2
+  source: slack
+  event_type: message
+  thread_id: checkout-500
+  author: bob
+  text: "Yeah still broken for me too, tried again just now"
+  occurred_at: "2026-07-28T15:40:00Z"
+  metadata:
+    link_key: checkout-500
+
+- id: github-1
+  source: github
+  event_type: commit
+  thread_id: checkout-500
+  author: carol
+  text: "Regression likely introduced in payment-validation refactor (PR #482): validates card token before order total is finalized."
+  url: "https://github.com/acme/shop/pull/482"
+  occurred_at: "2026-07-27T18:00:00Z"
+  metadata:
+    link_key: checkout-500
+
+- id: gmail-1
+  source: gmail
+  event_type: email_thread
+  thread_id: checkout-500
+  author: support@acme.com
+  text: "Customer escalation: Globex reports checkout failures on payment submission since July 27."
+  occurred_at: "2026-07-29T09:15:00Z"
+  metadata:
+    link_key: checkout-500

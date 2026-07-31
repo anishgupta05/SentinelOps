@@ -1,0 +1,6 @@
+label: full
+enabled_sources:
+  - slack
+  - github
+  - linear
+  - gmail
