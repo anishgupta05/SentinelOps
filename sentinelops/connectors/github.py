@@ -1,0 +1,7 @@
+from sentinelops.connectors.base import FixtureConnector
+from sentinelops.contracts.events import SourceEvent
+
+
+class GitHubConnector(FixtureConnector):
+    def __init__(self, events: list[SourceEvent], enabled: bool = True) -> None:
+        super().__init__(source="github", events=events, enabled=enabled)
