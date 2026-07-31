@@ -13,6 +13,7 @@ def print_demo(
     *,
     use_real_hydra: bool,
     use_real_rocketride: bool,
+    use_real_insforge: bool,
 ) -> None:
     result = run_demo_pipeline(
         context_name,
@@ -20,6 +21,7 @@ def print_demo(
         incident,
         use_real_hydra=use_real_hydra,
         use_real_rocketride=use_real_rocketride,
+        use_real_insforge=use_real_insforge,
     )
 
     print(f"=== SentinelOps demo ({result.trace.context_label} context) ===")
@@ -63,6 +65,11 @@ def print_demo(
         tokens = result.rocketride_status.get("tokens", {})
         print(f"Billing tokens: {tokens.get('total')}")
 
+    if result.insforge_audit_row is not None:
+        print()
+        print("--- InsForge (live audit) ---")
+        print(f"Persisted decision: {result.insforge_audit_row}")
+
 
 def main() -> None:
     parser = argparse.ArgumentParser(prog="sentinelops")
@@ -84,6 +91,12 @@ def main() -> None:
         help="Also publish the result through a real RocketRide-hosted pipeline "
         "(needs ROCKETRIDE_APIKEY set)",
     )
+    demo.add_argument(
+        "--audit-insforge",
+        action="store_true",
+        help="Also persist the policy decision to a real InsForge-hosted audit "
+        "table (needs INSFORGE_API_KEY and INSFORGE_BASE_URL set)",
+    )
 
     args = parser.parse_args()
 
@@ -94,6 +107,7 @@ def main() -> None:
             args.incident,
             use_real_hydra=args.graph_backend == "hydradb",
             use_real_rocketride=args.publish_rocketride,
+            use_real_insforge=args.audit_insforge,
         )
 
 

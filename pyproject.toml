@@ -12,6 +12,9 @@ dependencies = [
 [project.optional-dependencies]
 hydra = ["hydradb-sdk>=2,<3"]
 rocketride = ["rocketride>=1,<2"]
+insforge = [
+    "httpx>=0.27",
+]
 
 [project.scripts]
 sentinelops = "cli:main"

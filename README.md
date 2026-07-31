@@ -170,8 +170,21 @@ uv sync --extra rocketride
 ROCKETRIDE_APIKEY=... uv run --extra rocketride python cli.py demo --context full --publish-rocketride --query "..."
 ```
 
-The Streamlit app has a matching "Publish to RocketRide" toggle in the sidebar. Pipeshift and InsForge remain mock-only until their credentials/docs are available.
+The Streamlit app has a matching "Publish to RocketRide" toggle in the sidebar.
 
-Remaining stretch work: exposing the pipeline as an MCP tool (see Stretch Goal), and wiring Pipeshift/InsForge in behind their existing adapter interfaces.
+### Real InsForge integration
+
+InsForge is a general-purpose backend platform (Postgres database, auth, storage, edge functions) at a project-specific subdomain (`https://<project>.insforge.app`), not a narrow "intent policy" service - there's no InsForge endpoint that could implement `decide()`'s domain-specific logic for us. What maps cleanly is durable storage: `sentinelops/policy/insforge_live.py`'s `AuditedIntentPolicy` wraps the local decision logic (`policy/insforge.py`, unchanged) and additionally persists every `IntentPolicyDecision` to a real Postgres table via InsForge's REST API, so the intent boundary CLAUDE.md describes is an inspectable audit trail rather than something that only ever lived in process memory.
+
+Talks to the REST API directly with `httpx` rather than the `insforge` pip package (v0.1.0): the installed SDK's `create_table` call serializes columns with different field names than this live server actually validates - confirmed by testing both against the real API.
+
+```
+uv sync --extra insforge
+INSFORGE_API_KEY=... INSFORGE_BASE_URL=https://your-project.insforge.app uv run --extra insforge python cli.py demo --context full --audit-insforge --query "..."
+```
+
+The Streamlit app has a matching "Audit to InsForge" toggle in the sidebar. Pipeshift remains mock-only until credentials/docs are available.
+
+Remaining stretch work: exposing the pipeline as an MCP tool (see Stretch Goal), and wiring Pipeshift in behind its existing adapter interface.
 
 Run tests with `uv run pytest -q`; lint with `uv run ruff check .`.

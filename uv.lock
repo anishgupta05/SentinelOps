@@ -1354,6 +1354,9 @@ dependencies = [
 hydra = [
     { name = "hydradb-sdk" },
 ]
+insforge = [
+    { name = "httpx" },
+]
 rocketride = [
     { name = "rocketride" },
 ]
@@ -1367,13 +1370,14 @@ dev = [
 
 [package.metadata]
 requires-dist = [
+    { name = "httpx", marker = "extra == 'insforge'", specifier = ">=0.27" },
     { name = "hydradb-sdk", marker = "extra == 'hydra'", specifier = ">=2,<3" },
     { name = "pydantic", specifier = ">=2.7" },
     { name = "pyyaml", specifier = ">=6.0" },
     { name = "rocketride", marker = "extra == 'rocketride'", specifier = ">=1,<2" },
     { name = "streamlit", specifier = ">=1.35" },
 ]
-provides-extras = ["hydra", "rocketride"]
+provides-extras = ["hydra", "rocketride", "insforge"]
 
 [package.metadata.requires-dev]
 dev = [

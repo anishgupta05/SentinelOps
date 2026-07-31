@@ -26,6 +26,7 @@ class PipelineResult:
     notification: NotificationPayload | None
     trace: PipelineTrace
     rocketride_status: dict | None = None
+    insforge_audit_row: dict | None = None
 
 
 def run(
