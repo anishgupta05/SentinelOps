@@ -148,6 +148,17 @@ For presenting the demo, there's also a Streamlit frontend (`app.py`) with a "Ru
 uv run streamlit run app.py
 ```
 
-Remaining stretch work: exposing the pipeline as an MCP tool (see Stretch Goal), and wiring real sponsor clients in behind the existing adapter interfaces.
+### Real HydraDB integration
+
+The HydraDB adapter has a real implementation (`sentinelops/graph/hydra_live.py`), verified against the live API, alongside the local mock (`InMemoryHydraGraph`). It ingests events as HydraDB knowledge sources with explicit forceful relations between events that share a `link_key` - the same cross-source grouping the mock does locally, now computed as real graph edges in HydraDB's backend. Node logic is unaffected either way, since both implementations satisfy the same `ContextGraph` interface.
+
+```
+uv sync --extra hydra
+HYDRA_DB_API_KEY=... uv run --extra hydra python cli.py demo --context full --graph-backend hydradb --query "..."
+```
+
+The Streamlit app has a matching "Use real HydraDB" toggle in the sidebar (enabled once `HYDRA_DB_API_KEY` is set in the environment). Pipeshift, RocketRide, and InsForge remain mock-only until their credentials/docs are available.
+
+Remaining stretch work: exposing the pipeline as an MCP tool (see Stretch Goal), and wiring the other three sponsor clients in behind their existing adapter interfaces.
 
 Run tests with `uv run pytest -q`; lint with `uv run ruff check .`.

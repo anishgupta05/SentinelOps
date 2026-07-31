@@ -3,6 +3,8 @@
 Run with: uv run streamlit run app.py
 """
 
+import os
+
 import streamlit as st
 
 from sentinelops.demo_data import INCIDENTS
@@ -61,6 +63,22 @@ st.caption(
     "and Gmail, and drafts a grounded Linear ticket."
 )
 
+hydra_key_present = bool(os.environ.get("HYDRA_DB_API_KEY"))
+with st.sidebar:
+    st.header("Settings")
+    use_real_hydra = st.checkbox(
+        "Use real HydraDB",
+        value=False,
+        disabled=not hydra_key_present,
+        help=(
+            "Set HYDRA_DB_API_KEY in the environment to enable this."
+            if not hydra_key_present
+            else "Routes graph ingestion and entity resolution through the live "
+            "HydraDB API instead of the local mock. Each run makes real network "
+            "calls, so it's slower."
+        ),
+    )
+
 tab_run, tab_compare = st.tabs(["Run", "Full vs Degraded"])
 
 with tab_run:
@@ -74,7 +92,9 @@ with tab_run:
     )
 
     if st.button("Run pipeline", type="primary"):
-        st.session_state["run_result"] = run_demo_pipeline(context_name, query, incident)
+        st.session_state["run_result"] = run_demo_pipeline(
+            context_name, query, incident, use_real_hydra=use_real_hydra
+        )
 
     result = st.session_state.get("run_result")
     if result is not None:
@@ -100,8 +120,12 @@ with tab_compare:
 
     if st.button("Compare contexts", type="primary"):
         st.session_state["compare_result"] = (
-            run_demo_pipeline("full", compare_query, compare_incident),
-            run_demo_pipeline("degraded", compare_query, compare_incident),
+            run_demo_pipeline(
+                "full", compare_query, compare_incident, use_real_hydra=use_real_hydra
+            ),
+            run_demo_pipeline(
+                "degraded", compare_query, compare_incident, use_real_hydra=use_real_hydra
+            ),
         )
 
     compare = st.session_state.get("compare_result")
