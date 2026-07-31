@@ -55,6 +55,17 @@ def render_outcome(result: PipelineResult) -> None:
     st.markdown(f"**Rationale:** {result.notification.rationale}")
     st.markdown(f"**Sent:** {result.notification.sent}")
 
+    if result.rocketride_status is not None:
+        st.subheader("RocketRide (live)")
+        status = result.rocketride_status
+        metrics = status.get("metrics", {})
+        tokens = status.get("tokens", {})
+        col_status, col_cpu, col_mem, col_tokens = st.columns(4)
+        col_status.metric("Status", status.get("status", "n/a"))
+        col_cpu.metric("CPU", f"{metrics.get('cpu_percent', 0):.1f}%")
+        col_mem.metric("Memory", f"{metrics.get('cpu_memory_mb', 0):.1f} MB")
+        col_tokens.metric("Billing tokens", tokens.get("total", 0))
+
 
 st.set_page_config(page_title="SentinelOps", layout="wide")
 st.title("SentinelOps")
@@ -64,6 +75,9 @@ st.caption(
 )
 
 hydra_key_present = bool(os.environ.get("HYDRA_DB_API_KEY"))
+rocketride_key_present = bool(
+    os.environ.get("ROCKETRIDE_APIKEY") or os.environ.get("ROCKETRIDE_AUTH")
+)
 with st.sidebar:
     st.header("Settings")
     use_real_hydra = st.checkbox(
@@ -76,6 +90,18 @@ with st.sidebar:
             else "Routes graph ingestion and entity resolution through the live "
             "HydraDB API instead of the local mock. Each run makes real network "
             "calls, so it's slower."
+        ),
+    )
+    use_real_rocketride = st.checkbox(
+        "Publish to RocketRide",
+        value=False,
+        disabled=not rocketride_key_present,
+        help=(
+            "Set ROCKETRIDE_APIKEY in the environment to enable this."
+            if not rocketride_key_present
+            else "Publishes the finished result through a real RocketRide-hosted "
+            "pipeline and shows the engine's live task status. Does not run "
+            "SentinelOps' own reasoning on RocketRide - see rocketride_live.py."
         ),
     )
 
@@ -93,7 +119,11 @@ with tab_run:
 
     if st.button("Run pipeline", type="primary"):
         st.session_state["run_result"] = run_demo_pipeline(
-            context_name, query, incident, use_real_hydra=use_real_hydra
+            context_name,
+            query,
+            incident,
+            use_real_hydra=use_real_hydra,
+            use_real_rocketride=use_real_rocketride,
         )
 
     result = st.session_state.get("run_result")
@@ -121,10 +151,18 @@ with tab_compare:
     if st.button("Compare contexts", type="primary"):
         st.session_state["compare_result"] = (
             run_demo_pipeline(
-                "full", compare_query, compare_incident, use_real_hydra=use_real_hydra
+                "full",
+                compare_query,
+                compare_incident,
+                use_real_hydra=use_real_hydra,
+                use_real_rocketride=use_real_rocketride,
             ),
             run_demo_pipeline(
-                "degraded", compare_query, compare_incident, use_real_hydra=use_real_hydra
+                "degraded",
+                compare_query,
+                compare_incident,
+                use_real_hydra=use_real_hydra,
+                use_real_rocketride=use_real_rocketride,
             ),
         )
 
