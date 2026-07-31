@@ -118,4 +118,30 @@ Expose the finished pipeline as an MCP tool so it can be triggered directly from
 
 ## Repository Status
 
-This repository is currently in the concept and planning stage. The next implementation milestone is to scaffold the pipeline interfaces and mock the four nodes end-to-end before wiring real sponsor integrations.
+The pipeline is implemented end to end in Python, backed by local fixture-driven mocks for all four sponsor integrations (HydraDB, Pipeshift, RocketRide, InsForge) behind typed adapter interfaces, so real clients can be swapped in without changing node logic.
+
+```
+sentinelops/
+  contracts/     # typed data contracts (pydantic)
+  graph/         # HydraDB adapter + mock (entity-resolved context graph)
+  reasoning/      # Pipeshift adapter + mock (root-cause/severity scoring)
+  connectors/      # slack, github, linear, gmail (fixture-backed, enable/disable per source)
+  policy/           # InsForge adapter + mock (intent policy: draft-only by default)
+  nodes/             # triage, root_cause, fix_proposal, notify
+  orchestrator/       # pipeline runner + RocketRide trace mock
+  fixtures/            # demo incident data + full/degraded context configs
+```
+
+Run the demo:
+
+```
+uv sync
+uv run sentinelops demo --context full --query "Which bugs did we complain about in Slack that never became tickets?"
+uv run sentinelops demo --context degraded --query "Which bugs did we complain about in Slack that never became tickets?"
+```
+
+The full-context run grounds its root-cause analysis in all four sources; the degraded (Slack-only) run visibly drops confidence and lists the missing sources directly in the printed trace, matching the Demo Flow above.
+
+Remaining stretch work: exposing the pipeline as an MCP tool (see Stretch Goal), and wiring real sponsor clients in behind the existing adapter interfaces.
+
+Run tests with `uv run pytest -q`; lint with `uv run ruff check .`.
