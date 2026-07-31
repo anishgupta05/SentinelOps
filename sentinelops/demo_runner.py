@@ -11,13 +11,13 @@ from sentinelops.reasoning.pipeshift import RuleBasedTriageModel
 
 
 def build_pipeline_inputs(
-    context_name: str,
+    context_name: str, incident: str = "checkout_500"
 ) -> tuple[InMemoryHydraGraph, list[SourceConnector], DemoContext]:
-    """Wire the shared incident fixture into a graph + connectors for the given
-    context. Both the CLI and the Streamlit app run through this so full vs
-    degraded stays defined in exactly one place."""
+    """Wire an incident fixture into a graph + connectors for the given context.
+    Both the CLI and the Streamlit app run through this so full vs degraded, and
+    which incident is loaded, stay defined in exactly one place."""
     context = load_context(context_name)
-    all_events = load_events()
+    all_events = load_events(incident)
     enabled = set(context.enabled_sources)
 
     graph = InMemoryHydraGraph()
@@ -35,8 +35,10 @@ def build_pipeline_inputs(
     return graph, connectors, context
 
 
-def run_demo_pipeline(context_name: str, query: str) -> PipelineResult:
-    graph, connectors, context = build_pipeline_inputs(context_name)
+def run_demo_pipeline(
+    context_name: str, query: str, incident: str = "checkout_500"
+) -> PipelineResult:
+    graph, connectors, context = build_pipeline_inputs(context_name, incident)
     return run(
         query=query,
         context_label=context.label,
