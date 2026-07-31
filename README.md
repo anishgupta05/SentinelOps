@@ -148,6 +148,8 @@ For presenting the demo, there's also a Streamlit frontend (`app.py`) with a "Ru
 uv run streamlit run app.py
 ```
 
+There's also a pitch deck (`slides.html`) for presenting the project itself — problem, architecture, the full-vs-degraded visual, and which sponsor integrations are genuinely live. Open it directly in a browser (no server needed); arrow keys or the on-screen buttons navigate, `F` toggles fullscreen.
+
 ### Real HydraDB integration
 
 The HydraDB adapter has a real implementation (`sentinelops/graph/hydra_live.py`), verified against the live API, alongside the local mock (`InMemoryHydraGraph`). It ingests events as HydraDB knowledge sources with explicit forceful relations between events that share a `link_key` - the same cross-source grouping the mock does locally, now computed as real graph edges in HydraDB's backend. Node logic is unaffected either way, since both implementations satisfy the same `ContextGraph` interface.
