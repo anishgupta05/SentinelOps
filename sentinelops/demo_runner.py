@@ -1,3 +1,5 @@
+import os
+
 from sentinelops.connectors import GitHubConnector, GmailConnector, LinearConnector, SlackConnector
 from sentinelops.connectors.base import SourceConnector
 from sentinelops.contracts.events import SourceEvent
@@ -6,7 +8,7 @@ from sentinelops.graph.hydra import ContextGraph, InMemoryHydraGraph
 from sentinelops.orchestrator.pipeline import PipelineResult, run
 from sentinelops.orchestrator.rocketride import InMemoryTraceRecorder
 from sentinelops.policy.config import load_default_policy
-from sentinelops.policy.insforge import ConfigDrivenIntentPolicy
+from sentinelops.policy.insforge import ConfigDrivenIntentPolicy, IntentPolicy
 from sentinelops.reasoning.pipeshift import RuleBasedTriageModel
 
 
@@ -57,6 +59,19 @@ def _rocketride_payload(result: PipelineResult, query: str, context_label: str) 
     }
 
 
+def _build_policy(use_real_insforge: bool) -> IntentPolicy:
+    config = load_default_policy()
+    if not use_real_insforge:
+        return ConfigDrivenIntentPolicy(config)
+
+    from sentinelops.policy.insforge_live import AuditedIntentPolicy
+
+    base_url = os.environ.get("INSFORGE_BASE_URL")
+    if not base_url:
+        raise RuntimeError("use_real_insforge requires INSFORGE_BASE_URL to be set")
+    return AuditedIntentPolicy(config, base_url=base_url)
+
+
 def run_demo_pipeline(
     context_name: str,
     query: str,
@@ -64,19 +79,23 @@ def run_demo_pipeline(
     *,
     use_real_hydra: bool = False,
     use_real_rocketride: bool = False,
+    use_real_insforge: bool = False,
 ) -> PipelineResult:
     graph, connectors, context = build_pipeline_inputs(
         context_name, incident, use_real_hydra=use_real_hydra
     )
+    policy = _build_policy(use_real_insforge)
     result = run(
         query=query,
         context_label=context.label,
         graph=graph,
         connectors=connectors,
         model=RuleBasedTriageModel(),
-        policy=ConfigDrivenIntentPolicy(load_default_policy()),
+        policy=policy,
         recorder=InMemoryTraceRecorder(),
     )
+
+    result.insforge_audit_row = getattr(policy, "last_audit_row", None)
 
     if use_real_rocketride:
         from sentinelops.orchestrator.rocketride_live import publish_result

@@ -66,6 +66,10 @@ def render_outcome(result: PipelineResult) -> None:
         col_mem.metric("Memory", f"{metrics.get('cpu_memory_mb', 0):.1f} MB")
         col_tokens.metric("Billing tokens", tokens.get("total", 0))
 
+    if result.insforge_audit_row is not None:
+        st.subheader("InsForge (live audit)")
+        st.json(result.insforge_audit_row)
+
 
 st.set_page_config(page_title="SentinelOps", layout="wide")
 st.title("SentinelOps")
@@ -77,6 +81,9 @@ st.caption(
 hydra_key_present = bool(os.environ.get("HYDRA_DB_API_KEY"))
 rocketride_key_present = bool(
     os.environ.get("ROCKETRIDE_APIKEY") or os.environ.get("ROCKETRIDE_AUTH")
+)
+insforge_configured = bool(
+    os.environ.get("INSFORGE_API_KEY") and os.environ.get("INSFORGE_BASE_URL")
 )
 with st.sidebar:
     st.header("Settings")
@@ -104,6 +111,18 @@ with st.sidebar:
             "SentinelOps' own reasoning on RocketRide - see rocketride_live.py."
         ),
     )
+    use_real_insforge = st.checkbox(
+        "Audit to InsForge",
+        value=False,
+        disabled=not insforge_configured,
+        help=(
+            "Set INSFORGE_API_KEY and INSFORGE_BASE_URL in the environment to "
+            "enable this."
+            if not insforge_configured
+            else "Persists every intent policy decision to a real InsForge-hosted "
+            "Postgres table. Decision logic stays local - see insforge_live.py."
+        ),
+    )
 
 tab_run, tab_compare = st.tabs(["Run", "Full vs Degraded"])
 
@@ -124,6 +143,7 @@ with tab_run:
             incident,
             use_real_hydra=use_real_hydra,
             use_real_rocketride=use_real_rocketride,
+            use_real_insforge=use_real_insforge,
         )
 
     result = st.session_state.get("run_result")
@@ -156,6 +176,7 @@ with tab_compare:
                 compare_incident,
                 use_real_hydra=use_real_hydra,
                 use_real_rocketride=use_real_rocketride,
+                use_real_insforge=use_real_insforge,
             ),
             run_demo_pipeline(
                 "degraded",
@@ -163,6 +184,7 @@ with tab_compare:
                 compare_incident,
                 use_real_hydra=use_real_hydra,
                 use_real_rocketride=use_real_rocketride,
+                use_real_insforge=use_real_insforge,
             ),
         )
 
