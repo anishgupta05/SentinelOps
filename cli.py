@@ -2,13 +2,15 @@
 
 import argparse
 
+from sentinelops.demo_data import INCIDENTS
 from sentinelops.demo_runner import run_demo_pipeline
 
 
-def print_demo(context_name: str, query: str) -> None:
-    result = run_demo_pipeline(context_name, query)
+def print_demo(context_name: str, query: str, incident: str) -> None:
+    result = run_demo_pipeline(context_name, query, incident)
 
     print(f"=== SentinelOps demo ({result.trace.context_label} context) ===")
+    print(f"Incident: {INCIDENTS[incident]}")
     print(f"Query: {query}\n")
 
     print("--- Trace ---")
@@ -45,12 +47,13 @@ def main() -> None:
 
     demo = subparsers.add_parser("demo", help="Run the pipeline against a fixture context")
     demo.add_argument("--context", choices=["full", "degraded"], default="full")
+    demo.add_argument("--incident", choices=list(INCIDENTS), default="checkout_500")
     demo.add_argument("--query", required=True)
 
     args = parser.parse_args()
 
     if args.command == "demo":
-        print_demo(args.context, args.query)
+        print_demo(args.context, args.query, args.incident)
 
 
 if __name__ == "__main__":

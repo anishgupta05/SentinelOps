@@ -5,6 +5,7 @@ Run with: uv run streamlit run app.py
 
 import streamlit as st
 
+from sentinelops.demo_data import INCIDENTS
 from sentinelops.demo_runner import run_demo_pipeline
 from sentinelops.orchestrator.pipeline import PipelineResult
 
@@ -63,14 +64,17 @@ st.caption(
 tab_run, tab_compare = st.tabs(["Run", "Full vs Degraded"])
 
 with tab_run:
-    col_query, col_context = st.columns([3, 1])
+    col_query, col_incident, col_context = st.columns([3, 2, 2])
     query = col_query.text_input("Query", value=DEFAULT_QUERY)
+    incident = col_incident.selectbox(
+        "Incident", options=list(INCIDENTS), format_func=lambda i: INCIDENTS[i]
+    )
     context_name = col_context.selectbox(
         "Context", options=["full", "degraded"], format_func=lambda c: CONTEXT_LABELS[c]
     )
 
     if st.button("Run pipeline", type="primary"):
-        st.session_state["run_result"] = run_demo_pipeline(context_name, query)
+        st.session_state["run_result"] = run_demo_pipeline(context_name, query, incident)
 
     result = st.session_state.get("run_result")
     if result is not None:
@@ -83,12 +87,21 @@ with tab_compare:
         "the demo's core visual: confidence and grounding drop when GitHub, "
         "Linear, and Gmail become unavailable."
     )
-    compare_query = st.text_input("Query", value=DEFAULT_QUERY, key="compare_query")
+    col_compare_query, col_compare_incident = st.columns([3, 2])
+    compare_query = col_compare_query.text_input(
+        "Query", value=DEFAULT_QUERY, key="compare_query"
+    )
+    compare_incident = col_compare_incident.selectbox(
+        "Incident",
+        options=list(INCIDENTS),
+        format_func=lambda i: INCIDENTS[i],
+        key="compare_incident",
+    )
 
     if st.button("Compare contexts", type="primary"):
         st.session_state["compare_result"] = (
-            run_demo_pipeline("full", compare_query),
-            run_demo_pipeline("degraded", compare_query),
+            run_demo_pipeline("full", compare_query, compare_incident),
+            run_demo_pipeline("degraded", compare_query, compare_incident),
         )
 
     compare = st.session_state.get("compare_result")
@@ -99,12 +112,23 @@ with tab_compare:
             full_confidence = full_result.analysis.confidence
             degraded_confidence = degraded_result.analysis.confidence
             metric_full, metric_degraded = st.columns(2)
-            metric_full.metric("Full context confidence", f"{full_confidence:.2f}")
+            metric_full.metric(
+                "Full context confidence",
+                f"{full_confidence:.2f}",
+                help=f"Severity: {full_result.analysis.severity}",
+            )
             metric_degraded.metric(
                 "Degraded context confidence",
                 f"{degraded_confidence:.2f}",
                 delta=f"{degraded_confidence - full_confidence:.2f}",
+                help=f"Severity: {degraded_result.analysis.severity}",
             )
+            if full_result.analysis.severity != degraded_result.analysis.severity:
+                st.info(
+                    f"Severity assessment also changes: **{degraded_result.analysis.severity}** "
+                    f"(degraded) vs **{full_result.analysis.severity}** (full) — missing evidence "
+                    f"changed the read on how bad this is, not just how confident."
+                )
 
         col_full, col_degraded = st.columns(2)
         with col_full:

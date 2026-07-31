@@ -9,14 +9,21 @@ from sentinelops.contracts.events import SourceEvent
 
 FIXTURES_DIR = Path(__file__).parent / "fixtures"
 
+INCIDENTS: dict[str, str] = {
+    "checkout_500": "Checkout 500 on payment submission",
+    "billing_escalation": "Billing overcharge — customer escalation",
+}
+
 
 class DemoContext(BaseModel):
     label: str
     enabled_sources: list[SourceName]
 
 
-def load_events() -> list[SourceEvent]:
-    data = yaml.safe_load((FIXTURES_DIR / "events.yaml").read_text())
+def load_events(incident: str = "checkout_500") -> list[SourceEvent]:
+    if incident not in INCIDENTS:
+        raise ValueError(f"unknown incident: {incident!r}; choose from {list(INCIDENTS)}")
+    data = yaml.safe_load((FIXTURES_DIR / f"events_{incident}.yaml").read_text())
     return [SourceEvent.model_validate(e) for e in data]
 
 

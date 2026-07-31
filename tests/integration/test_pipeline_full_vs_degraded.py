@@ -27,11 +27,25 @@ def test_degraded_context_has_lower_confidence_and_missing_evidence() -> None:
 
 
 def test_trace_records_all_four_nodes_for_both_contexts() -> None:
-    for context_name in ("full", "degraded"):
-        result = run_demo_pipeline(context_name, QUERY)
-        assert [r.node for r in result.trace.records] == [
-            "triage",
-            "root_cause",
-            "fix_proposal",
-            "notify",
-        ]
+    for incident in ("checkout_500", "billing_escalation"):
+        for context_name in ("full", "degraded"):
+            result = run_demo_pipeline(context_name, QUERY, incident)
+            assert [r.node for r in result.trace.records] == [
+                "triage",
+                "root_cause",
+                "fix_proposal",
+                "notify",
+            ]
+
+
+def test_billing_escalation_severity_changes_with_missing_evidence() -> None:
+    """A second, differently-shaped incident: a low-key internal Slack mention
+    only reads as high severity once GitHub's evidence is available - missing
+    context changes the *assessment*, not just the confidence number."""
+    full = run_demo_pipeline("full", QUERY, "billing_escalation")
+    degraded = run_demo_pipeline("degraded", QUERY, "billing_escalation")
+
+    assert full.analysis is not None and degraded.analysis is not None
+    assert full.analysis.severity == "high"
+    assert degraded.analysis.severity == "low"
+    assert degraded.analysis.confidence < full.analysis.confidence

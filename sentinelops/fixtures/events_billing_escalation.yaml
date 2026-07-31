@@ -1,0 +1,34 @@
+# A second incident, deliberately different in character from checkout_500:
+# a low-key internal mention that only reads as high-severity once GitHub's
+# root-cause context is available - full vs degraded here differs in severity,
+# not just confidence.
+- id: slack-b1
+  source: slack
+  event_type: message
+  thread_id: billing-thread-1
+  author: dave
+  text: "Noticed a couple duplicate charges in billing during checkout retries, might just be a fluke on our end?"
+  occurred_at: "2026-07-25T11:10:00Z"
+  metadata:
+    link_key: billing-dupcharge
+
+- id: github-b1
+  source: github
+  event_type: commit
+  thread_id: billing-thread-1
+  author: erin
+  text: "Retry logic in the payment worker is failing intermittently under network timeouts, causing duplicate charge submissions (regression from PR #510)."
+  url: "https://github.com/acme/shop/pull/510"
+  occurred_at: "2026-07-24T16:30:00Z"
+  metadata:
+    link_key: billing-dupcharge
+
+- id: gmail-b1
+  source: gmail
+  event_type: email_thread
+  thread_id: billing-thread-1
+  author: support@acme.com
+  text: "Customer escalation: Initech reports being double-charged twice this week after failed payment retries; finance wants an explanation today."
+  occurred_at: "2026-07-25T13:45:00Z"
+  metadata:
+    link_key: billing-dupcharge
