@@ -6,11 +6,12 @@ from sentinelops.demo_data import INCIDENTS
 from sentinelops.demo_runner import run_demo_pipeline
 
 
-def print_demo(context_name: str, query: str, incident: str) -> None:
-    result = run_demo_pipeline(context_name, query, incident)
+def print_demo(context_name: str, query: str, incident: str, *, use_real_hydra: bool) -> None:
+    result = run_demo_pipeline(context_name, query, incident, use_real_hydra=use_real_hydra)
 
     print(f"=== SentinelOps demo ({result.trace.context_label} context) ===")
     print(f"Incident: {INCIDENTS[incident]}")
+    print(f"Graph backend: {'HydraDB (live)' if use_real_hydra else 'mock'}")
     print(f"Query: {query}\n")
 
     print("--- Trace ---")
@@ -49,11 +50,19 @@ def main() -> None:
     demo.add_argument("--context", choices=["full", "degraded"], default="full")
     demo.add_argument("--incident", choices=list(INCIDENTS), default="checkout_500")
     demo.add_argument("--query", required=True)
+    demo.add_argument(
+        "--graph-backend",
+        choices=["mock", "hydradb"],
+        default="mock",
+        help="'hydradb' uses the real API (needs HYDRA_DB_API_KEY set)",
+    )
 
     args = parser.parse_args()
 
     if args.command == "demo":
-        print_demo(args.context, args.query, args.incident)
+        print_demo(
+            args.context, args.query, args.incident, use_real_hydra=args.graph_backend == "hydradb"
+        )
 
 
 if __name__ == "__main__":
