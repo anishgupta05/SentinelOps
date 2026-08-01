@@ -39,7 +39,7 @@ class HydraDBClient:
         token: str | None = None,
         collection: str = "sentinelops",
         ready_timeout_s: float = 60.0,
-        index_timeout_s: float = 60.0,
+        index_timeout_s: float = 150.0,
     ) -> None:
         try:
             from hydra_db import ConflictError, HydraDB
