@@ -43,6 +43,7 @@ class HydraDBClient:
     ) -> None:
         try:
             from hydra_db import ConflictError, HydraDB
+            from hydra_db.core.api_error import ApiError
         except ImportError as exc:
             raise ImportError(
                 "HydraDBClient requires the real SDK: pip install 'hydradb-sdk>=2,<3'"
@@ -55,6 +56,7 @@ class HydraDBClient:
             )
         self._client = HydraDB(token=token)
         self._conflict_error = ConflictError
+        self._api_error = ApiError
         self.database = database
         self.collection = collection
         self._ready_timeout_s = ready_timeout_s
@@ -108,13 +110,32 @@ class HydraDBClient:
                 item["relations"] = {"ids": related}
             payload.append(item)
 
-        self._client.context.ingest(
-            type="knowledge",
-            database=self.database,
-            collection=self.collection,
-            app_knowledge=json.dumps(payload),
-        )
+        self._ingest_with_retry(payload)
         self._wait_for_indexing([e.id for e in events])
+
+    def _ingest_with_retry(self, payload: list[dict], timeout_s: float = 45.0) -> None:
+        """`databases.status().infra.ready_for_ingestion` isn't sufficient proof
+        on its own - confirmed live: a database that just reported ready can
+        still 404 on ingest with "vectorstore collection has not been
+        provisioned yet" for tens of seconds after. Retry the ingest itself
+        rather than trust one ready flag flip. The SDK only raises its typed
+        `NotFoundError` for a handful of endpoints; `ingest` falls through to
+        the generic `ApiError`, so this checks `status_code` directly instead
+        of catching a specific exception type."""
+        deadline = time.monotonic() + timeout_s
+        while True:
+            try:
+                self._client.context.ingest(
+                    type="knowledge",
+                    database=self.database,
+                    collection=self.collection,
+                    app_knowledge=json.dumps(payload),
+                )
+                return
+            except self._api_error as exc:
+                if exc.status_code != 404 or time.monotonic() >= deadline:
+                    raise
+                time.sleep(2)
 
     def _wait_for_indexing(self, ids: list[str]) -> None:
         deadline = time.monotonic() + self._index_timeout_s
