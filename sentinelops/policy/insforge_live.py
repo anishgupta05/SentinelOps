@@ -95,6 +95,24 @@ class AuditedIntentPolicy:
             time.sleep(1)
         raise TimeoutError(f"InsForge table {_TABLE!r} did not become queryable in time")
 
+    def _insert_with_retry(self, row: dict, timeout_s: float = 20.0) -> None:
+        """The read-readiness check above isn't sufficient on its own - confirmed
+        live: a GET on a freshly created table can succeed while a POST to the
+        same table still 404s for a few more seconds (read and write paths
+        propagate separately). Retry the write itself rather than trust one
+        successful read as proof the table is fully ready."""
+        deadline = time.monotonic() + timeout_s
+        last_response = None
+        while time.monotonic() < deadline:
+            response = self._http.post(f"/api/database/records/{_TABLE}", json=[row])
+            if response.status_code < 400:
+                return
+            last_response = response
+            if response.status_code != 404:
+                response.raise_for_status()
+            time.sleep(1)
+        last_response.raise_for_status()
+
     def decide(
         self,
         action: PolicyAction,
@@ -119,8 +137,7 @@ class AuditedIntentPolicy:
             "matched_rule": decision.matched_rule,
             "required_evidence_met": decision.required_evidence_met,
         }
-        response = self._http.post(f"/api/database/records/{_TABLE}", json=[row])
-        response.raise_for_status()
+        self._insert_with_retry(row)
         self.last_audit_row = row
         return decision
 
